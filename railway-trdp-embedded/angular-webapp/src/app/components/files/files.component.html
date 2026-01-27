@@ -1,0 +1,32 @@
+<div class="page-card">
+  <div class="page-header">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
+    </svg>
+    <h2>TRDP Data Files (Last 3 Days)</h2>
+  </div>
+  
+  <div class="file-list">
+    <div *ngFor="let file of dataFiles" class="file-item">
+      <div class="file-info">
+        <div class="file-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="file-name">{{ file.name }}</div>
+          <div class="file-meta">{{ formatBytes(file.size) }}</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" (click)="downloadFile(file.name)">Download</button>
+    </div>
+  </div>
+  
+  <div class="alert alert-warning">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+    </svg>
+    <p>Data is automatically logged hourly/daily and stored for the last 3 days. Older files are automatically deleted to manage SD card space.</p>
+  </div>
+</div>

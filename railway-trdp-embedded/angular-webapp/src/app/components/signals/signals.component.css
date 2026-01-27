@@ -1,0 +1,61 @@
+.config-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.add-signal-form {
+  background: #1e293b;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  border: 1px solid #3b82f6;
+  margin-bottom: 1.5rem;
+}
+
+.add-signal-form h3 {
+  color: #f1f5f9;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.signals-table-container {
+  overflow-x: auto;
+}
+
+.signals-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #1e293b;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.signals-table thead {
+  background: #334155;
+}
+
+.signals-table th {
+  padding: 0.75rem;
+  text-align: left;
+  color: #f1f5f9;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.signals-table td {
+  padding: 0.75rem;
+  color: #cbd5e1;
+  font-size: 0.875rem;
+  border-top: 1px solid #334155;
+}
+
+.signals-table tbody tr:hover {
+  background: #334155;
+}

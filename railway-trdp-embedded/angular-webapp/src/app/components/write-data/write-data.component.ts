@@ -1,0 +1,165 @@
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { ApiService, Signal } from '../../services/api.service';
+
+@Component({
+  selector: 'app-write-data',
+  templateUrl: './write-data.component.html',
+  styleUrls: ['./write-data.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class WriteDataComponent implements OnInit {
+  signals: Signal[] = [];
+  subsystems: any[] = [];
+  writeData: { [key: number]: any } = {};
+  selectedSubsystem = '';
+  configuredSubsystemNames: string[] = [];
+  
+  // Cached computed values to avoid recalculating on every change detection
+  writableSignals: Signal[] = [];
+  groupedByComId: { [comid: string]: Signal[] } = {};
+
+  constructor(
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.loadData();
+  }
+
+  loadData(): void {
+    // Load subsystems first, then signals
+    this.apiService.getSubsystems().subscribe({
+      next: (response) => {
+        this.subsystems = response.subsystems || [];
+        // Only show configured subsystems
+        this.configuredSubsystemNames = this.subsystems.map(s => s.name);
+        // Set default selected subsystem to first configured one
+        if (this.configuredSubsystemNames.length > 0 && !this.selectedSubsystem) {
+          this.selectedSubsystem = this.configuredSubsystemNames[0];
+        }
+        // Update cached values when subsystems change
+        this.updateWritableSignals();
+        this.cdr.markForCheck();
+        
+        // Now load signals and filter by configured subsystems
+        this.apiService.getSignals().subscribe({
+          next: (signalResponse) => {
+            // Only show signals for configured subsystems
+            const configuredSubsystemIds = this.subsystems.map(s => s.id);
+            this.signals = (signalResponse.signals || []).filter(s => 
+              configuredSubsystemIds.includes(s.subsystemId)
+            );
+            console.log('Loaded signals:', this.signals);
+            console.log('Selected subsystem:', this.selectedSubsystem);
+            // Update cached values
+            this.updateWritableSignals();
+            console.log('Writable signals:', this.writableSignals);
+            this.cdr.markForCheck();
+          },
+          error: (err) => {
+            console.error('Error loading signals:', err);
+            this.cdr.markForCheck();
+          }
+        });
+      }
+    });
+  }
+
+  getSubsystemName(subsystemId: number): string {
+    const subsystem = this.subsystems.find(s => s.id === subsystemId);
+    return subsystem ? subsystem.name : 'Unknown';
+  }
+
+  // Update cached writable signals - call this when data changes
+  updateWritableSignals(): void {
+    // Only show signals for configured subsystems
+    const configuredSubsystemIds = this.subsystems.map(s => s.id);
+    this.writableSignals = this.signals.filter(s => {
+      const subsystemMatch = configuredSubsystemIds.includes(s.subsystemId);
+      const nameMatch = this.getSubsystemName(s.subsystemId) === this.selectedSubsystem;
+      const accessMatch = s.access === 'WRITE' || s.access === 'READ/WRITE';
+      
+      return subsystemMatch && nameMatch && accessMatch;
+    });
+    
+    // Update grouped by COM ID
+    this.groupedByComId = {};
+    this.writableSignals.forEach(signal => {
+      const comid = signal.comid.toString();
+      if (!this.groupedByComId[comid]) {
+        this.groupedByComId[comid] = [];
+      }
+      this.groupedByComId[comid].push(signal);
+    });
+    
+    // Debug logging
+    if (this.writableSignals.length === 0 && this.signals.length > 0) {
+      console.log('No writable signals found. Debug info:');
+      console.log('All signals:', this.signals);
+      console.log('Selected subsystem:', this.selectedSubsystem);
+      console.log('Configured subsystem IDs:', configuredSubsystemIds);
+      this.signals.forEach(s => {
+        console.log(`Signal ${s.name}: subsystemId=${s.subsystemId}, subsystemName=${this.getSubsystemName(s.subsystemId)}, access=${s.access}`);
+      });
+    }
+  }
+  
+  // Method to handle subsystem selection change
+  onSubsystemChange(subsystem: string): void {
+    this.selectedSubsystem = subsystem;
+    this.updateWritableSignals();
+    this.cdr.markForCheck();
+  }
+
+  writeSignalValue(signalId: number, value: any): void {
+    // Get signal datatype
+    const signal = this.signals.find(s => s.id === signalId);
+    const datatype = signal?.datatype || 'FLOAT32';
+    
+    this.apiService.writeData(signalId, value, datatype).subscribe({
+      next: () => {
+        alert('Data written successfully!');
+      },
+      error: (error) => {
+        alert('Failed to write data: ' + error.message);
+      }
+    });
+  }
+
+  sendAllWriteData(): void {
+    if (Object.keys(this.writeData).length === 0) {
+      alert('No data to send');
+      return;
+    }
+
+    // Get subsystem ID
+    const subsystem = this.subsystems.find(s => s.name === this.selectedSubsystem);
+    if (!subsystem) {
+      alert('Subsystem not found');
+      return;
+    }
+
+    // Prepare batch data with datatypes
+    const batchSignals = Object.entries(this.writeData).map(([signalIdStr, value]) => {
+      const signalId = parseInt(signalIdStr);
+      const signal = this.signals.find(s => s.id === signalId);
+      return {
+        signalId,
+        value,
+        datatype: signal?.datatype || 'FLOAT32'
+      };
+    });
+
+    // Use batch write for better performance
+    this.apiService.writeDataBatch(subsystem.id, batchSignals).subscribe({
+      next: () => {
+        alert(`Data sent to ${this.selectedSubsystem} subsystem successfully!`);
+        this.writeData = {};
+      },
+      error: (error) => {
+        alert('Failed to write data: ' + error.message);
+      }
+    });
+  }
+}

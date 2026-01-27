@@ -1,0 +1,56 @@
+.write-signals-container {
+  background: #1e293b;
+  border: 2px solid #334155;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.write-signal-item {
+  border-bottom: 1px solid #334155;
+  padding: 1.25rem 0;
+}
+
+.write-signal-item:last-child {
+  border-bottom: none;
+}
+
+.signal-info h4 {
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: #f1f5f9;
+  margin-bottom: 0.5rem;
+}
+
+.signal-info p {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.boolean-controls,
+.numeric-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.boolean-controls .btn,
+.numeric-controls .btn {
+  flex: 1;
+}
+
+.numeric-controls .form-input {
+  flex: 1;
+}
+
+.send-all-container {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #334155;
+  text-align: right;
+}
+
+.send-all-container .btn {
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+}

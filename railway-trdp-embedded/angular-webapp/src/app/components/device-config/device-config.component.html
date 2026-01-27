@@ -1,0 +1,106 @@
+<div class="page-card">
+  <div class="page-header">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+    </svg>
+    <h2>Device Configuration</h2>
+  </div>
+  
+  <div class="config-section">
+    <h3>IP Settings</h3>
+    
+    <div *ngIf="configuredSubsystemNames.length === 0" class="alert alert-warning" style="margin-bottom: 1.5rem;">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+      </svg>
+      <p>No subsystems configured. Please configure subsystems first before setting device configuration.</p>
+    </div>
+    
+    <div *ngIf="configuredSubsystemNames.length > 0" class="subsystems-info" style="margin-bottom: 1.5rem; padding: 1rem; background: #334155; border-radius: 0.5rem;">
+      <h4 style="color: #3b82f6; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 600;">Configured Subsystems:</h4>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        <span *ngFor="let sub of configuredSubsystemNames" style="padding: 0.25rem 0.75rem; background: #1e293b; border-radius: 0.25rem; color: #cbd5e1; font-size: 0.875rem;">
+          {{ sub }}
+        </span>
+      </div>
+    </div>
+    
+      <div class="radio-group">
+        <label class="radio-label">
+          <input type="radio" name="ipMode" value="static" [(ngModel)]="deviceConfig.ipMode" (change)="onIPModeChange()" />
+          <span>Static IP</span>
+        </label>
+        
+        <div *ngIf="deviceConfig.ipMode === 'static'" class="radio-content">
+          <div class="form-group-with-validation">
+            <input 
+              type="text" 
+              [(ngModel)]="deviceConfig.ipAddress" 
+              (blur)="onIPAddressChange()"
+              (input)="onIPAddressChange()"
+              [class.error]="validationErrors.ipAddress"
+              class="form-input" 
+              placeholder="IP Address (e.g., 192.168.1.100)" 
+            />
+            <div *ngIf="validationErrors.ipAddress" class="validation-error">
+              {{ validationErrors.ipAddress }}
+            </div>
+          </div>
+          
+          <div class="form-group-with-validation">
+            <input 
+              type="text" 
+              [(ngModel)]="deviceConfig.subnetMask" 
+              (blur)="onSubnetMaskChange()"
+              (input)="onSubnetMaskChange()"
+              [class.error]="validationErrors.subnetMask"
+              class="form-input" 
+              placeholder="Subnet Mask (e.g., 255.255.255.0)" 
+            />
+            <div *ngIf="validationErrors.subnetMask" class="validation-error">
+              {{ validationErrors.subnetMask }}
+            </div>
+          </div>
+          
+          <div class="form-group-with-validation">
+            <input 
+              type="text" 
+              [(ngModel)]="deviceConfig.gateway" 
+              (blur)="onGatewayChange()"
+              (input)="onGatewayChange()"
+              [class.error]="validationErrors.gateway"
+              class="form-input" 
+              placeholder="Gateway (e.g., 192.168.1.1)" 
+            />
+            <div *ngIf="validationErrors.gateway" class="validation-error">
+              {{ validationErrors.gateway }}
+            </div>
+          </div>
+        </div>
+      </div>
+    
+    <div class="radio-group">
+      <label class="radio-label">
+        <input type="radio" name="ipMode" value="dhcp" [(ngModel)]="deviceConfig.ipMode" />
+        <span>DHCP (Option 81) - Dynamic IP Range</span>
+      </label>
+    </div>
+    
+    <div class="radio-group">
+      <label class="radio-label">
+        <input type="radio" name="ipMode" value="custom" [(ngModel)]="deviceConfig.ipMode" />
+        <span>Option 62 - Custom Configuration</span>
+      </label>
+    </div>
+    
+      <button 
+        class="btn btn-success" 
+        (click)="sendConfiguration()" 
+        [disabled]="deviceConfig.ipMode === 'static' && !isFormValid()"
+        style="margin-top: 1.5rem; width: 100%; padding: 1rem;"
+        [class.disabled]="deviceConfig.ipMode === 'static' && !isFormValid()"
+      >
+        Send Configuration to Device
+      </button>
+  </div>
+</div>

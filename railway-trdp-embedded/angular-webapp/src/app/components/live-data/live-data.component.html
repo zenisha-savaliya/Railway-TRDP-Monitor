@@ -1,0 +1,68 @@
+<div class="page-card">
+  <div class="page-header">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </svg>
+    <h2>Live TRDP Data Stream (Read Mode)</h2>
+  </div>
+  
+  <div *ngIf="signals.length === 0" class="alert alert-warning">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+    </svg>
+    <p>No signals configured. Please add signals in Configuration.</p>
+  </div>
+  
+  <div *ngIf="signals.length > 0">
+    <div class="mb-6">
+      <label class="block text-sm font-medium mb-3">Select Subsystem</label>
+      <div class="subsystem-buttons">
+        <button 
+          *ngFor="let sub of configuredSubsystemNames"
+          [class.active]="selectedSubsystem === sub"
+          (click)="selectedSubsystem = sub"
+          class="btn btn-secondary"
+        >
+          {{ sub }}
+        </button>
+      </div>
+      <div *ngIf="configuredSubsystemNames.length === 0" class="alert alert-warning">
+        <p>No subsystems configured. Please configure subsystems first.</p>
+      </div>
+    </div>
+    
+    <div *ngFor="let comid of getGroupedSignals() | keyvalue" class="comid-group">
+      <div class="comid-header">
+        <h3>COM ID: {{ comid.key }}</h3>
+      </div>
+      <div class="signal-grid">
+        <div *ngFor="let signal of comid.value" class="signal-card">
+          <div class="signal-header">
+            <div>
+              <div class="signal-name">{{ signal.name }}</div>
+              <div class="signal-comid">{{ signal.datatype }} • {{ signal.cycletime }}ms</div>
+            </div>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="#10b981">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+          </div>
+          <div *ngIf="signal.datatype === 'BOOLEAN'" class="boolean-display">
+            <svg *ngIf="liveData[signal.name]" viewBox="0 0 24 24" width="64" height="64" fill="#fbbf24">
+              <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"/>
+            </svg>
+            <svg *ngIf="!liveData[signal.name]" viewBox="0 0 24 24" width="64" height="64" fill="#4b5563">
+              <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/>
+            </svg>
+            <div class="boolean-text">{{ liveData[signal.name] ? 'ON' : 'OFF' }}</div>
+          </div>
+          <div *ngIf="signal.datatype !== 'BOOLEAN'" class="signal-value">
+            {{ liveData[signal.name] !== undefined ? liveData[signal.name] : '0.00' }}
+          </div>
+          <div class="signal-meta">
+            {{ signal.msgtype }} • {{ signal.access }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

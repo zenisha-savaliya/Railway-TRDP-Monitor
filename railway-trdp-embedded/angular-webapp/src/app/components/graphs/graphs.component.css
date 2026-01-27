@@ -1,0 +1,39 @@
+.parameter-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+.checkbox-label:hover {
+  background: #334155;
+}
+
+.checkbox-label.checked {
+  background: #2563eb;
+  color: white;
+}
+
+.checkbox-label input {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+.chart-container {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  height: 400px;
+}

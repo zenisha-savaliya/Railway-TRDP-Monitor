@@ -1,0 +1,113 @@
+<div class="page-card">
+  <div class="page-header">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z"/>
+    </svg>
+    <h2>Signal Configuration</h2>
+  </div>
+  
+  <div class="config-actions">
+    <button class="btn btn-primary" (click)="addSignal()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+      </svg>
+      Add Signal
+    </button>
+    <button class="btn btn-success" (click)="saveSignals()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+        <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+      </svg>
+      Save Signals
+    </button>
+  </div>
+  
+  <div class="add-signal-form">
+    <h3>Add New Signal</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Signal Name</label>
+        <input type="text" [(ngModel)]="newSignal.name" class="form-input" placeholder="Signal Name" />
+      </div>
+      <div class="form-group">
+        <label>Subsystem</label>
+        <select [(ngModel)]="newSignal.subsystemId" class="form-input">
+          <option *ngFor="let sub of subsystems" [value]="sub.id">{{ sub.name }}</option>
+        </select>
+        <div *ngIf="subsystems.length === 0" class="alert alert-warning" style="margin-top: 0.5rem; padding: 0.5rem; font-size: 0.75rem;">
+          No subsystems configured. Please configure subsystems first.
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Datatype</label>
+        <select [(ngModel)]="newSignal.datatype" class="form-input">
+          <option *ngFor="let dt of DATATYPE_OPTIONS" [value]="dt">{{ dt }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>COM ID</label>
+        <input type="number" [(ngModel)]="newSignal.comid" class="form-input" placeholder="COM ID" />
+      </div>
+      <div class="form-group">
+        <label>Scaling</label>
+        <input type="number" step="0.01" [(ngModel)]="newSignal.scaling" class="form-input" />
+      </div>
+      <div class="form-group">
+        <label>Cycle Time (ms)</label>
+        <input type="number" [(ngModel)]="newSignal.cycletime" class="form-input" />
+      </div>
+      <div class="form-group">
+        <label>Msg Type</label>
+        <select [(ngModel)]="newSignal.msgtype" class="form-input">
+          <option *ngFor="let mt of MSGTYPE_OPTIONS" [value]="mt">{{ mt }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Access</label>
+        <select [(ngModel)]="newSignal.access" class="form-input" [disabled]="true">
+          <option *ngFor="let acc of ACCESS_OPTIONS" [value]="acc">{{ acc }}</option>
+        </select>
+        <small style="color: #94a3b8; font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+          Access is set to READ/WRITE by default
+        </small>
+      </div>
+    </div>
+  </div>
+  
+  <div class="signals-table-container">
+    <table class="signals-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Subsystem</th>
+          <th>Datatype</th>
+          <th>COM ID</th>
+          <th>Scaling</th>
+          <th>Cycle (ms)</th>
+          <th>Msg Type</th>
+          <th>Access</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let signal of getFilteredSignals()">
+          <td>{{ signal.name }}</td>
+          <td>{{ getSubsystemName(signal.subsystemId) }}</td>
+          <td>{{ signal.datatype }}</td>
+          <td>{{ signal.comid }}</td>
+          <td>{{ signal.scaling }}</td>
+          <td>{{ signal.cycletime }}</td>
+          <td>{{ signal.msgtype }}</td>
+          <td>{{ signal.access }}</td>
+          <td>
+            <button class="btn btn-danger" (click)="deleteSignal(signal.id)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="getFilteredSignals().length === 0">
+          <td colspan="9" style="text-align: center; padding: 2rem; color: #94a3b8;">
+            No signals found for configured subsystems. Please configure subsystems first.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

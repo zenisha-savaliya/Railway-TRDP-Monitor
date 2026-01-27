@@ -1,0 +1,64 @@
+<div class="page-card">
+  <div class="page-header">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+    </svg>
+    <h2>Subsystem Configuration</h2>
+  </div>
+  
+  <div class="config-actions">
+    <button class="btn btn-primary" (click)="addSubsystem()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+      </svg>
+      Add Subsystem
+    </button>
+    <button class="btn btn-success" (click)="saveSubsystems()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+        <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+      </svg>
+      Save Configuration
+    </button>
+    <button class="btn btn-cyan" (click)="downloadConfiguration()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+        <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
+      </svg>
+      Download Config
+    </button>
+    <label class="btn btn-purple" style="cursor: pointer; margin: 0;">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+        <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+      </svg>
+      Upload Config
+      <input type="file" accept=".json" (change)="handleConfigUpload($event)" style="display: none;" />
+    </label>
+  </div>
+  
+  <div *ngFor="let subsystem of subsystems; let i = index" class="subsystem-item">
+    <div class="subsystem-header">
+      <h3>Subsystem {{ i + 1 }}</h3>
+      <button *ngIf="subsystems.length > 1" class="btn btn-danger" (click)="deleteSubsystem(subsystem.id)">Delete</button>
+    </div>
+    <div class="subsystem-grid">
+      <div class="form-group">
+        <label>Name</label>
+        <select [(ngModel)]="subsystem.name" (change)="updateSubsystem(subsystem.id, 'name', subsystem.name)" class="form-input">
+          <option *ngFor="let opt of SUBSYSTEM_OPTIONS" [value]="opt">{{ opt }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select [(ngModel)]="subsystem.type" (change)="updateSubsystem(subsystem.id, 'type', subsystem.type)" class="form-input">
+          <option>TCN</option>
+          <option>MVB</option>
+          <option>WTB</option>
+          <option>ETB</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column: span 2;">
+        <label>IP Address</label>
+        <input type="text" [(ngModel)]="subsystem.ip" (change)="updateSubsystem(subsystem.id, 'ip', subsystem.ip)" class="form-input" placeholder="192.168.1.100" />
+      </div>
+    </div>
+  </div>
+</div>

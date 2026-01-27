@@ -1,0 +1,118 @@
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.block {
+  display: block;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.subsystem-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.btn-secondary {
+  background: #334155;
+  color: #cbd5e1;
+  border: 2px solid #475569;
+}
+
+.btn-secondary:hover,
+.btn-secondary.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.comid-group {
+  margin-bottom: 2rem;
+}
+
+.comid-header {
+  background: #1e293b;
+  border-left: 4px solid #fbbf24;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+}
+
+.comid-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: #f1f5f9;
+}
+
+.signal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.signal-card {
+  background: #334155;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  border: 1px solid #475569;
+  transition: all 0.2s;
+}
+
+.signal-card:hover {
+  border-color: #3b82f6;
+}
+
+.signal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 0.75rem;
+}
+
+.signal-name {
+  color: #f1f5f9;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.signal-comid {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
+
+.signal-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3b82f6;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.boolean-display {
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.boolean-text {
+  margin-top: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.signal-meta {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #475569;
+}

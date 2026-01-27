@@ -1,0 +1,38 @@
+<div class="page-card">
+  <div class="page-header">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+    </svg>
+    <h2>Firmware Update</h2>
+  </div>
+  
+  <div class="firmware-section">
+    <div class="form-group">
+      <label>Select Firmware File (.bin, .hex)</label>
+      <input 
+        type="file" 
+        accept=".bin,.hex" 
+        (change)="handleFirmwareUpload($event)"
+        [disabled]="isUploading"
+        class="form-input"
+      />
+    </div>
+    
+    <div *ngIf="firmwareProgress > 0" class="progress-section">
+      <div class="progress-label">
+        <span>Upload Progress</span>
+        <span>{{ firmwareProgress }}%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="firmwareProgress"></div>
+      </div>
+    </div>
+    
+    <div class="alert alert-danger">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+      </svg>
+      <p>Warning: Do not power off the device during firmware update. The system will automatically reboot after completion.</p>
+    </div>
+  </div>
+</div>

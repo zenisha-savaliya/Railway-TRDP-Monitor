@@ -4,7 +4,8 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { BinaryProtocolService } from './binary-protocol.service';
 
-const API_BASE = '/api';
+// Use current window origin to ensure API calls use the same host/port as the page
+const API_BASE = `${window.location.origin}/api`;
 
 export interface Subsystem {
   id: number;

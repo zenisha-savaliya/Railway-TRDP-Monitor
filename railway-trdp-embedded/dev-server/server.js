@@ -6,12 +6,15 @@ const http = require('http');
 const path = require('path');
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 const JWT_SECRET = 'railway-trdp-secret-key';
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Raw body parser for binary write data (only for octet-stream)
+const rawParser = express.raw({ type: 'application/octet-stream', limit: '64kb' });
 
 // Serve static files from the webapp dist folder
 const webappPath = path.join(__dirname, '../webapp/dist');
@@ -185,17 +188,19 @@ app.get('/api/livedata', authenticateToken, (req, res) => {
     });
 });
 
-// Write data route (Angular format)
-app.post('/api/writedata', authenticateToken, (req, res) => {
-    console.log('[API] POST write data (Angular format)');
-    // Angular sends binary data, but for now we'll handle JSON
-    res.json({ success: true, response: new ArrayBuffer(0) });
+// Write data route (Angular format) - accepts binary (application/octet-stream)
+app.post('/api/writedata', rawParser, authenticateToken, (req, res) => {
+    console.log('[API] POST write data (Angular format)', req.body ? `body length: ${req.body.length}` : '');
+    // Return 200; client expects arraybuffer response
+    res.set('Content-Type', 'application/octet-stream');
+    res.status(200).send(Buffer.from([]));
 });
 
-// Batch write data route
-app.post('/api/writedata/batch', authenticateToken, (req, res) => {
-    console.log('[API] POST batch write data (Angular format)');
-    res.json({ success: true, response: new ArrayBuffer(0) });
+// Batch write data route - accepts binary (application/octet-stream)
+app.post('/api/writedata/batch', rawParser, authenticateToken, (req, res) => {
+    console.log('[API] POST batch write data (Angular format)', req.body ? `body length: ${req.body.length}` : '');
+    res.set('Content-Type', 'application/octet-stream');
+    res.status(200).send(Buffer.from([]));
 });
 
 // Files route

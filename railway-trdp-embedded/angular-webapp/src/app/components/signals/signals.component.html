@@ -31,14 +31,38 @@
     </div>
   </div>
   
-  <div class="add-signal-form">
+  <!-- Show configured subsystems so user can see and switch which subsystem they're configuring -->
+  <div class="mb-6" *ngIf="configuredSubsystemNames.length > 0">
+    <label class="block text-sm font-medium mb-3">Configured Subsystems</label>
+    <div class="subsystem-buttons">
+      <button
+        *ngFor="let sub of configuredSubsystemNames"
+        [class.active]="selectedSubsystem === sub"
+        (click)="selectedSubsystem = sub; onSubsystemChange(sub)"
+        class="btn btn-secondary"
+      >
+        {{ sub }}
+      </button>
+    </div>
+    <p class="text-muted text-sm mt-2">Signals below are for subsystem: <strong>{{ selectedSubsystem }}</strong>. New signals will be added to this subsystem.</p>
+  </div>
+  <div class="alert alert-warning mb-6" *ngIf="configuredSubsystemNames.length === 0">
+    <p>No subsystems configured. Please configure subsystems first in Subsystem Configuration.</p>
+  </div>
+
+  <div class="add-signal-form" *ngIf="configuredSubsystemNames.length > 0">
     <h3>Add New Signal</h3>
     <div class="form-grid">
       <div class="form-group">
         <label>Signal Name</label>
         <input type="text" [(ngModel)]="newSignal.name" class="form-input" placeholder="Signal Name" />
       </div>
-      <!-- Subsystem selection removed; signals will use the currently configured subsystem -->
+      <div class="form-group">
+        <label>Subsystem</label>
+        <select [(ngModel)]="selectedSubsystem" (ngModelChange)="onSubsystemChange($event)" class="form-input">
+          <option *ngFor="let sub of configuredSubsystemNames" [value]="sub">{{ sub }}</option>
+        </select>
+      </div>
       <div class="form-group">
         <label>Datatype</label>
         <select [(ngModel)]="newSignal.datatype" class="form-input">
@@ -149,7 +173,12 @@
         </tr>
         <tr *ngIf="getFilteredSignals().length === 0">
           <td colspan="9" style="text-align: center; padding: 2rem; color: #94a3b8;">
-            No signals found for configured subsystems. Please configure subsystems first.
+            <ng-container *ngIf="configuredSubsystemNames.length === 0">
+              No subsystems configured. Please configure subsystems first in Subsystem Configuration.
+            </ng-container>
+            <ng-container *ngIf="configuredSubsystemNames.length > 0">
+              No signals for <strong>{{ selectedSubsystem }}</strong> yet. Add a signal above.
+            </ng-container>
           </td>
         </tr>
       </tbody>

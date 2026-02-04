@@ -62,8 +62,21 @@ export class SubsystemsComponent implements OnInit {
       next: () => {
         alert('Subsystems saved successfully!');
       },
-      error: () => {
-        alert('Failed to save subsystems');
+      error: (err) => {
+        console.error('Save subsystems failed:', err);
+        const msg = err?.error?.message || err?.error?.error || err?.message;
+        const status = err?.status;
+        if (status === 401) {
+          alert('Session expired or not logged in. Please log in again.');
+        } else if (status === 403) {
+          alert('Access denied. Please log in again.');
+        } else if (status === 400) {
+          alert('Invalid data: ' + (msg || 'Bad request'));
+        } else if (!status || status === 0 || status === 502 || status === 503 || (err?.message && err.message.includes('Http failure'))) {
+          alert('Cannot reach server. Is the backend running? Start it (e.g. node dev-server/server.js on port 8081) and ensure the app proxies /api to it.');
+        } else {
+          alert('Failed to save subsystems' + (msg ? ': ' + msg : ''));
+        }
       }
     });
   }

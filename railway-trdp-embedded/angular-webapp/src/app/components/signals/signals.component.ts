@@ -220,6 +220,17 @@ export class SignalsComponent implements OnInit {
     });
   }
 
+  /**
+   * When user switches subsystem (tabs or dropdown), update selected subsystem and newSignal.subsystemId.
+   */
+  onSubsystemChange(subsystemName: string): void {
+    this.selectedSubsystem = subsystemName;
+    const sub = this.subsystems.find(s => s.name === subsystemName);
+    if (sub) {
+      this.newSignal.subsystemId = sub.id;
+    }
+  }
+
   getSubsystemName(subsystemId: number): string {
     const subsystem = this.subsystems.find(s => s.id === subsystemId);
     return subsystem ? subsystem.name : 'Unknown';

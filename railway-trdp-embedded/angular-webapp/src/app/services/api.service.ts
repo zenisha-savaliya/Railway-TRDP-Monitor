@@ -225,4 +225,95 @@ export class ApiService {
     }
     return this.http.post(`${API_BASE}/firmware`, formData, { headers });
   }
+
+  // Device configuration endpoints
+  getDeviceConfig(): Observable<any> {
+    return this.http.get(`${API_BASE}/v1/config/device`, {
+      headers: this.getHeaders().set('Accept', 'application/json')
+    }).pipe(
+      map((response: any) => {
+        // Backend returns { status: 'success', data: {...} }
+        return response.data || response;
+      }),
+      catchError(error => {
+        console.error('Error fetching device config:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  updateDeviceConfig(config: any): Observable<any> {
+    return this.http.put(`${API_BASE}/v1/config/device`, config, {
+      headers: this.getHeaders().set('Content-Type', 'application/json')
+    }).pipe(
+      catchError(error => {
+        console.error('Error updating device config:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Download full device configuration file for all subsystems.
+   */
+  downloadDeviceConfig(): void {
+    window.open(`${API_BASE}/v1/config/device/download`, '_blank');
+  }
+
+  /**
+   * Upload a device configuration file that contains
+   * parameters for all subsystems.
+   */
+  uploadDeviceConfig(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('config', file);
+
+    const token = localStorage.getItem('authToken');
+    let headers = new HttpHeaders();
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    return this.http.post(`${API_BASE}/v1/config/device/upload`, formData, {
+      headers
+    }).pipe(
+      catchError(error => {
+        console.error('Error uploading device config:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Download full signals configuration file.
+   * This opens a new browser tab and lets the backend
+   * stream the configuration (e.g. JSON) to the user.
+   */
+  downloadSignalsConfig(): void {
+    window.open(`${API_BASE}/v1/config/signals/download`, '_blank');
+  }
+
+  /**
+   * Upload a signals configuration file and let the backend
+   * replace/update the current configuration.
+   */
+  uploadSignalsConfig(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('config', file);
+
+    const token = localStorage.getItem('authToken');
+    let headers = new HttpHeaders();
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    return this.http.post(`${API_BASE}/v1/config/signals/upload`, formData, {
+      headers
+    }).pipe(
+      catchError(error => {
+        console.error('Error uploading signals config:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 }

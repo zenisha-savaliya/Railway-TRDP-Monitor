@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ApiService, Signal } from '../../services/api.service';
+import { ApiService, Signal, Subsystem } from '../../services/api.service';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { Subscription, interval } from 'rxjs';
 
@@ -10,6 +10,9 @@ import { Subscription, interval } from 'rxjs';
 })
 export class GraphsComponent implements OnInit, OnDestroy {
   signals: Signal[] = [];
+  subsystems: Subsystem[] = [];
+  configuredSubsystemNames: string[] = [];
+  selectedSubsystem: string = '';
   selectedParams: string[] = [];
   graphData: any[] = [];
   liveData: { [key: string]: any } = {};
@@ -36,8 +39,21 @@ export class GraphsComponent implements OnInit, OnDestroy {
   constructor(private apiService: ApiService) {}
 
   ngOnInit(): void {
+    this.loadSubsystems();
     this.loadSignals();
     this.startPolling();
+  }
+
+  loadSubsystems(): void {
+    this.apiService.getSubsystems().subscribe({
+      next: (response) => {
+        this.subsystems = response.subsystems || [];
+        this.configuredSubsystemNames = this.subsystems.map(s => s.name);
+        if (this.configuredSubsystemNames.length > 0) {
+          this.selectedSubsystem = this.configuredSubsystemNames[0];
+        }
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -50,12 +66,24 @@ export class GraphsComponent implements OnInit, OnDestroy {
     this.apiService.getSignals().subscribe({
       next: (response) => {
         this.signals = response.signals || [];
-        if (this.signals.length > 0 && this.selectedParams.length === 0) {
-          this.selectedParams = this.signals.slice(0, 2).map(s => s.name);
-        }
-        this.updateChart();
+        this.updateFilteredSignals();
       }
     });
+  }
+
+  updateFilteredSignals(): void {
+    const filtered = this.getFilteredSignals();
+    if (filtered.length > 0 && this.selectedParams.length === 0) {
+      this.selectedParams = filtered.slice(0, 2).map(s => s.name);
+    }
+    this.updateChart();
+  }
+
+  getFilteredSignals(): Signal[] {
+    if (!this.selectedSubsystem) return this.signals;
+    const subsystem = this.subsystems.find(s => s.name === this.selectedSubsystem);
+    if (!subsystem) return this.signals;
+    return this.signals.filter(s => s.subsystemId === subsystem.id);
   }
 
   startPolling(): void {

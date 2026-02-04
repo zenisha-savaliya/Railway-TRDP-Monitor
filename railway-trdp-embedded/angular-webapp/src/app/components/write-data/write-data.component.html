@@ -30,6 +30,21 @@
     <p>No writable signals configured for {{ selectedSubsystem }} subsystem</p>
   </div>
   
+  <div *ngIf="writableSignals.length > 0" class="common-save-bar">
+    <button (click)="sendAllWriteData()" class="btn btn-primary btn-save-all" [disabled]="isSavingAll">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+      </svg>
+      {{ isSavingAll ? 'Saving...' : 'Save All to ' + selectedSubsystem }}
+    </button>
+    <button (click)="sendAllSubsystems()" class="btn btn-success btn-save-all-subsystems" [disabled]="isSavingAll">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+      </svg>
+      {{ isSavingAll ? 'Saving...' : 'Save to All Subsystems' }}
+    </button>
+  </div>
+  
   <div *ngFor="let comid of groupedByComId | keyvalue" class="comid-group">
     <div class="comid-header">
       <h3>COM ID: {{ comid.key }}</h3>
@@ -40,20 +55,17 @@
           <h4>{{ signal.name }}</h4>
           <p>Type: {{ signal.datatype }} • Access: {{ signal.access }}</p>
         </div>
-        <div *ngIf="signal.datatype === 'BOOLEAN'" class="boolean-controls">
+        <div *ngIf="signal.datatype === 'BOOLEAN' || signal.datatype === 'BIT'" class="boolean-controls">
           <button 
-            [class.active]="writeData[signal.id] === false"
-            (click)="writeData[signal.id] = false"
-            class="btn btn-secondary"
+            type="button"
+            class="toggle-button-write" 
+            [class.active]="writeData[signal.id] === true || writeData[signal.id] === 1"
+            (click)="writeData[signal.id] = writeData[signal.id] ? false : true"
           >
-            OFF (0)
-          </button>
-          <button 
-            [class.active]="writeData[signal.id] === true"
-            (click)="writeData[signal.id] = true"
-            class="btn btn-success"
-          >
-            ON (1)
+            <div class="toggle-slider-write" [class.active]="writeData[signal.id] === true || writeData[signal.id] === 1">
+              <div class="toggle-knob-write"></div>
+            </div>
+            <span class="toggle-label-write">{{ (writeData[signal.id] === true || writeData[signal.id] === 1) ? 'ON (1)' : 'OFF (0)' }}</span>
           </button>
           <button 
             (click)="writeSignalValue(signal.id, writeData[signal.id])"
@@ -62,7 +74,7 @@
             Send
           </button>
         </div>
-        <div *ngIf="signal.datatype !== 'BOOLEAN'" class="numeric-controls">
+        <div *ngIf="signal.datatype !== 'BOOLEAN' && signal.datatype !== 'BIT'" class="numeric-controls">
           <input 
             type="number"
             [step]="signal.datatype.includes('FLOAT') ? '0.01' : '1'"
@@ -78,11 +90,21 @@
           </button>
         </div>
       </div>
-      <div class="send-all-container">
-        <button (click)="sendAllWriteData()" class="btn btn-primary">
-          Send All to {{ selectedSubsystem }}
-        </button>
-      </div>
     </div>
+  </div>
+  
+  <div *ngIf="writableSignals.length > 0" class="common-save-bar common-save-bar-bottom">
+    <button (click)="sendAllWriteData()" class="btn btn-primary btn-save-all" [disabled]="isSavingAll">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+      </svg>
+      {{ isSavingAll ? 'Saving...' : 'Save All to ' + selectedSubsystem }}
+    </button>
+    <button (click)="sendAllSubsystems()" class="btn btn-success btn-save-all-subsystems" [disabled]="isSavingAll">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+      </svg>
+      {{ isSavingAll ? 'Saving...' : 'Save to All Subsystems' }}
+    </button>
   </div>
 </div>

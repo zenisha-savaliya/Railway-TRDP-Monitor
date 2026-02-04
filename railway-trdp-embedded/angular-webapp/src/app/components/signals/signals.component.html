@@ -6,19 +6,29 @@
     <h2>Signal Configuration</h2>
   </div>
   
-  <div class="config-actions">
-    <button class="btn btn-primary" (click)="addSignal()">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-      </svg>
-      Add Signal
-    </button>
-    <button class="btn btn-success" (click)="saveSignals()">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-        <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
-      </svg>
-      Save Signals
-    </button>
+  <div class="top-actions">
+    <div class="config-actions">
+      <button class="btn btn-download" (click)="downloadConfig()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+          <path d="M5 20h14v-2H5v2zm7-18L5.33 9h3.67v4h4V9h3.67L12 2z"/>
+        </svg>
+        Download Config
+      </button>
+
+      <button class="btn btn-upload" [disabled]="isUploading" (click)="fileInput.click()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+          <path d="M5 20h14v-2H5v2zm7-18l-7 7h4v4h6v-4h4l-7-7z"/>
+        </svg>
+        {{ isUploading ? 'Uploading...' : 'Upload Config' }}
+      </button>
+      <input
+        #fileInput
+        type="file"
+        accept=".json,.cfg,.txt"
+        (change)="onConfigFileSelected($event)"
+        style="display: none;"
+      />
+    </div>
   </div>
   
   <div class="add-signal-form">
@@ -28,15 +38,7 @@
         <label>Signal Name</label>
         <input type="text" [(ngModel)]="newSignal.name" class="form-input" placeholder="Signal Name" />
       </div>
-      <div class="form-group">
-        <label>Subsystem</label>
-        <select [(ngModel)]="newSignal.subsystemId" class="form-input">
-          <option *ngFor="let sub of subsystems" [value]="sub.id">{{ sub.name }}</option>
-        </select>
-        <div *ngIf="subsystems.length === 0" class="alert alert-warning" style="margin-top: 0.5rem; padding: 0.5rem; font-size: 0.75rem;">
-          No subsystems configured. Please configure subsystems first.
-        </div>
-      </div>
+      <!-- Subsystem selection removed; signals will use the currently configured subsystem -->
       <div class="form-group">
         <label>Datatype</label>
         <select [(ngModel)]="newSignal.datatype" class="form-input">
@@ -63,13 +65,56 @@
       </div>
       <div class="form-group">
         <label>Access</label>
-        <select [(ngModel)]="newSignal.access" class="form-input" [disabled]="true">
+        <select [(ngModel)]="newSignal.access" class="form-input">
           <option *ngFor="let acc of ACCESS_OPTIONS" [value]="acc">{{ acc }}</option>
         </select>
-        <small style="color: #94a3b8; font-size: 0.75rem; margin-top: 0.25rem; display: block;">
-          Access is set to READ/WRITE by default
-        </small>
+        <small>&nbsp;</small>
       </div>
+      <!-- BOOLEAN datatype: keep single on/off toggle -->
+      <div class="form-group" *ngIf="newSignal.datatype === 'BOOLEAN'">
+        <label>Bit Value</label>
+        <div class="toggle-container">
+          <button 
+            type="button"
+            class="toggle-button" 
+            [class.active]="bitValue === 1"
+            (click)="toggleBitValue()"
+          >
+            <div class="toggle-slider" [class.active]="bitValue === 1">
+              <div class="toggle-knob"></div>
+            </div>
+            <span class="toggle-label">{{ bitValue === 1 ? 'ON (1)' : 'OFF (0)' }}</span>
+          </button>
+        </div>
+        <small>&nbsp;</small>
+      </div>
+      <!-- BIT datatype: show 8 checkboxes for 8-bit value -->
+      <div class="form-group" *ngIf="newSignal.datatype === 'BIT'">
+        <label>Bit Value</label>
+        <div class="bit-checkboxes">
+          <label 
+            class="bit-checkbox" 
+            *ngFor="let bit of bitIndexes"
+          >
+            <input 
+              type="checkbox" 
+              [checked]="bitBits[bit]" 
+              (change)="onBitCheckboxChange(bit, $event)"
+            />
+            <span>Bit {{ bit }}</span>
+          </label>
+        </div>
+        <small>Decimal value: {{ bitValue }}</small>
+      </div>
+    </div>
+
+    <div class="add-signal-actions">
+      <button class="btn btn-primary" (click)="addSignal()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        </svg>
+        Add Signal
+      </button>
     </div>
   </div>
   
@@ -109,5 +154,14 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div *ngIf="getFilteredSignals().length > 0" class="common-save-bar common-save-bar-bottom">
+    <button class="btn btn-success btn-save-all" (click)="saveSignals()" [disabled]="isSaving">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+      </svg>
+      {{ isSaving ? 'Saving...' : 'Save All Signals' }}
+    </button>
   </div>
 </div>

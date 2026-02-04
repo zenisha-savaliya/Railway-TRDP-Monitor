@@ -16,6 +16,7 @@ export class DeviceConfigComponent implements OnInit {
   
   subsystems: Subsystem[] = [];
   configuredSubsystemNames: string[] = [];
+  isUploadingConfig: boolean = false;
   
   // Validation errors
   validationErrors = {
@@ -27,15 +28,62 @@ export class DeviceConfigComponent implements OnInit {
   constructor(private apiService: ApiService) {}
 
   ngOnInit(): void {
+    console.log('DeviceConfigComponent initialized');
     this.loadSubsystems();
+    this.loadDeviceConfig();
   }
 
   loadSubsystems(): void {
+    console.log('Loading subsystems...');
     this.apiService.getSubsystems().subscribe({
       next: (response) => {
         this.subsystems = response.subsystems || [];
         // Only show configured subsystems
         this.configuredSubsystemNames = this.subsystems.map(s => s.name);
+        console.log('Subsystems loaded successfully:', this.subsystems.length, this.subsystems);
+      },
+      error: (error) => {
+        console.error('Error loading subsystems:', error);
+        this.subsystems = [];
+        this.configuredSubsystemNames = [];
+        
+        // Provide user feedback based on error type
+        if (error.status === 401 || error.status === 403) {
+          alert('Authentication error: Please log in again.');
+        } else if (error.status === 0) {
+          alert('Network error: Cannot connect to server. Please ensure the backend server is running on port 8080.');
+        } else {
+          alert(`Error loading subsystems: ${error.message || 'Unknown error'}`);
+        }
+      }
+    });
+  }
+
+  loadDeviceConfig(): void {
+    console.log('Loading device configuration...');
+    this.apiService.getDeviceConfig().subscribe({
+      next: (config) => {
+        console.log('Device config loaded successfully:', config);
+        if (config) {
+          this.deviceConfig = {
+            ipMode: config.ipMode || 'static',
+            ipAddress: config.ipAddress || '',
+            subnetMask: config.subnetMask || '',
+            gateway: config.gateway || ''
+          };
+        }
+      },
+      error: (error) => {
+        console.error('Error loading device config:', error);
+        
+        // Provide user feedback based on error type
+        if (error.status === 401 || error.status === 403) {
+          alert('Authentication error: Please log in again.');
+        } else if (error.status === 0) {
+          alert('Network error: Cannot connect to server. Please ensure the backend server is running on port 8080.');
+        } else {
+          alert(`Error loading device configuration: ${error.message || 'Unknown error'}`);
+        }
       }
     });
   }
@@ -181,6 +229,65 @@ export class DeviceConfigComponent implements OnInit {
 
     console.log('Sending device configuration:', this.deviceConfig);
     console.log('Configured subsystems:', this.configuredSubsystemNames);
-    alert('Device configuration sent!\n\n' + JSON.stringify(this.deviceConfig, null, 2));
+    
+    // Send to backend
+    this.apiService.updateDeviceConfig(this.deviceConfig).subscribe({
+      next: (response) => {
+        console.log('Device configuration saved successfully:', response);
+        alert('Device configuration sent successfully!\n\n' + JSON.stringify(this.deviceConfig, null, 2));
+      },
+      error: (error) => {
+        console.error('Error saving device configuration:', error);
+        if (error.status === 401 || error.status === 403) {
+          alert('Authentication error: Please log in again.');
+        } else if (error.status === 0) {
+          alert('Network error: Cannot connect to server. Please ensure the backend server is running on port 8080.');
+        } else {
+          alert(`Error saving device configuration: ${error.message || 'Unknown error'}`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Download full device configuration (all subsystems).
+   */
+  downloadDeviceConfig(): void {
+    this.apiService.downloadDeviceConfig();
+  }
+
+  /**
+   * Upload device configuration file (all subsystems).
+   */
+  onDeviceConfigFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+
+    const file = input.files[0];
+    this.isUploadingConfig = true;
+
+    this.apiService.uploadDeviceConfig(file).subscribe({
+      next: (response) => {
+        console.log('Device config uploaded successfully:', response);
+        this.isUploadingConfig = false;
+        alert('Device configuration uploaded successfully.');
+        this.loadDeviceConfig();
+        input.value = '';
+      },
+      error: (error) => {
+        console.error('Error uploading device configuration:', error);
+        this.isUploadingConfig = false;
+
+        if (error.status === 401 || error.status === 403) {
+          alert('Authentication error: Please log in again.');
+        } else if (error.status === 0) {
+          alert('Network error: Cannot connect to server. Please ensure the backend server is running on port 8080.');
+        } else {
+          alert(`Error uploading device configuration: ${error.message || 'Unknown error'}`);
+        }
+      }
+    });
   }
 }

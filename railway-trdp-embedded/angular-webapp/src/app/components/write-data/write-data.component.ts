@@ -17,6 +17,7 @@ export class WriteDataComponent implements OnInit {
   // Cached computed values to avoid recalculating on every change detection
   writableSignals: Signal[] = [];
   groupedByComId: { [comid: string]: Signal[] } = {};
+  isSavingAll = false;
 
   constructor(
     private apiService: ApiService,
@@ -83,6 +84,14 @@ export class WriteDataComponent implements OnInit {
       return subsystemMatch && nameMatch && accessMatch;
     });
     
+    // Initialize write data with default values for BIT/BOOLEAN types
+    this.writableSignals.forEach(signal => {
+      if ((signal.datatype === 'BOOLEAN' || signal.datatype === 'BIT') && 
+          this.writeData[signal.id] === undefined) {
+        this.writeData[signal.id] = false;
+      }
+    });
+    
     // Update grouped by COM ID
     this.groupedByComId = {};
     this.writableSignals.forEach(signal => {
@@ -129,37 +138,117 @@ export class WriteDataComponent implements OnInit {
 
   sendAllWriteData(): void {
     if (Object.keys(this.writeData).length === 0) {
-      alert('No data to send');
+      alert('No data to send. Enter values first.');
       return;
     }
 
-    // Get subsystem ID
     const subsystem = this.subsystems.find(s => s.name === this.selectedSubsystem);
     if (!subsystem) {
       alert('Subsystem not found');
       return;
     }
 
-    // Prepare batch data with datatypes
-    const batchSignals = Object.entries(this.writeData).map(([signalIdStr, value]) => {
-      const signalId = parseInt(signalIdStr);
-      const signal = this.signals.find(s => s.id === signalId);
-      return {
-        signalId,
-        value,
-        datatype: signal?.datatype || 'FLOAT32'
-      };
-    });
+    // Only include signals that belong to current subsystem and have values
+    const batchSignals = this.writableSignals
+      .filter(s => this.writeData[s.id] !== undefined && this.writeData[s.id] !== null && this.writeData[s.id] !== '')
+      .map(s => ({
+        signalId: s.id,
+        value: this.writeData[s.id],
+        datatype: s.datatype || 'FLOAT32'
+      }));
 
-    // Use batch write for better performance
+    if (batchSignals.length === 0) {
+      alert('No data to send. Enter values for the current subsystem first.');
+      return;
+    }
+
+    this.isSavingAll = true;
+    this.cdr.markForCheck();
+
     this.apiService.writeDataBatch(subsystem.id, batchSignals).subscribe({
       next: () => {
-        alert(`Data sent to ${this.selectedSubsystem} subsystem successfully!`);
+        this.isSavingAll = false;
+        this.cdr.markForCheck();
+        alert(`Data sent to ${this.selectedSubsystem} successfully!`);
         this.writeData = {};
+        this.updateWritableSignals();
+        this.cdr.markForCheck();
       },
       error: (error) => {
-        alert('Failed to write data: ' + error.message);
+        this.isSavingAll = false;
+        this.cdr.markForCheck();
+        alert('Failed to write data: ' + (error.message || 'Unknown error'));
       }
+    });
+  }
+
+  /**
+   * Send write data to all subsystems that have writable signals with values.
+   * Groups data by subsystem and sends one batch per subsystem.
+   */
+  sendAllSubsystems(): void {
+    if (Object.keys(this.writeData).length === 0) {
+      alert('No data to send. Enter values first.');
+      return;
+    }
+
+    // Group signals (that have data) by subsystem
+    const bySubsystem: { [subsystemId: number]: { name: string; signals: Array<{ signalId: number; value: any; datatype: string }> } } = {};
+    this.subsystems.forEach(sub => {
+      const signalsWithData = this.signals.filter(s =>
+        s.subsystemId === sub.id &&
+        (s.access === 'WRITE' || s.access === 'READ/WRITE') &&
+        this.writeData[s.id] !== undefined &&
+        this.writeData[s.id] !== null &&
+        this.writeData[s.id] !== ''
+      );
+      if (signalsWithData.length > 0) {
+        bySubsystem[sub.id] = {
+          name: sub.name,
+          signals: signalsWithData.map(s => ({
+            signalId: s.id,
+            value: this.writeData[s.id],
+            datatype: s.datatype || 'FLOAT32'
+          }))
+        };
+      }
+    });
+
+    const subsystemIds = Object.keys(bySubsystem).map(id => parseInt(id, 10));
+    if (subsystemIds.length === 0) {
+      alert('No data to send for any subsystem. Enter values first.');
+      return;
+    }
+
+    this.isSavingAll = true;
+    this.cdr.markForCheck();
+
+    let completed = 0;
+    let hasError = false;
+    subsystemIds.forEach(subsystemId => {
+      const batch = bySubsystem[subsystemId];
+      this.apiService.writeDataBatch(subsystemId, batch.signals).subscribe({
+        next: () => {
+          completed++;
+          if (completed === subsystemIds.length) {
+            this.isSavingAll = false;
+            this.cdr.markForCheck();
+            if (!hasError) {
+              alert(`Data sent to all subsystems successfully! (${subsystemIds.length} subsystem(s))`);
+              this.writeData = {};
+              this.updateWritableSignals();
+              this.cdr.markForCheck();
+            }
+          }
+        },
+        error: (error) => {
+          hasError = true;
+          completed++;
+          this.isSavingAll = false;
+          this.cdr.markForCheck();
+          alert(`Failed to send to ${batch.name}: ` + (error.message || 'Unknown error'));
+        }
+      });
     });
   }
 }

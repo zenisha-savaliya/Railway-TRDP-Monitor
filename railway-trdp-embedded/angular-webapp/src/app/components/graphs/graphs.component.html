@@ -7,10 +7,27 @@
   </div>
   
   <div class="mb-6">
+    <label class="block text-sm font-medium mb-3">Select Subsystem</label>
+    <div class="subsystem-buttons">
+      <button 
+        *ngFor="let sub of configuredSubsystemNames"
+        [class.active]="selectedSubsystem === sub"
+        (click)="selectedSubsystem = sub; updateFilteredSignals()"
+        class="btn btn-secondary"
+      >
+        {{ sub }}
+      </button>
+    </div>
+    <div *ngIf="configuredSubsystemNames.length === 0" class="alert alert-warning">
+      <p>No subsystems configured. Please configure subsystems first.</p>
+    </div>
+  </div>
+  
+  <div class="mb-6" *ngIf="configuredSubsystemNames.length > 0">
     <label class="block text-sm font-medium mb-3">Select Parameters to Plot</label>
     <div class="parameter-selector">
       <label 
-        *ngFor="let signal of signals"
+        *ngFor="let signal of getFilteredSignals()"
         [class.checked]="selectedParams.includes(signal.name)"
         class="checkbox-label"
       >

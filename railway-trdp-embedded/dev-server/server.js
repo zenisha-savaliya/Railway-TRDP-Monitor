@@ -6,7 +6,8 @@ const http = require('http');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+// Use 8081 by default to avoid clashing with other local services
+const PORT = process.env.PORT || 8081;
 const JWT_SECRET = 'railway-trdp-secret-key';
 
 // Middleware
@@ -46,9 +47,9 @@ let deviceConfig = {
 function generateLiveData() {
     const data = {};
     signals.forEach(signal => {
-        if (signal.datatype === 'BOOLEAN') {
+        if (signal.datatype === 'BOOLEAN' || signal.datatype === 'BIT') {
             data[signal.name] = {
-                value: Math.random() > 0.5,
+                value: Math.random() > 0.5 ? 1 : 0,
                 quality: 'VALID',
                 timestamp: new Date().toISOString(),
                 comid: signal.comid
@@ -56,6 +57,20 @@ function generateLiveData() {
         } else if (signal.datatype === 'FLOAT32') {
             data[signal.name] = {
                 value: parseFloat((Math.random() * 100 * signal.scaling).toFixed(2)),
+                quality: 'VALID',
+                timestamp: new Date().toISOString(),
+                comid: signal.comid
+            };
+        } else if (signal.datatype === 'INT32') {
+            data[signal.name] = {
+                value: Math.floor(Math.random() * 200) - 100, // -100 to 100
+                quality: 'VALID',
+                timestamp: new Date().toISOString(),
+                comid: signal.comid
+            };
+        } else if (signal.datatype === 'UINT32') {
+            data[signal.name] = {
+                value: Math.floor(Math.random() * 1000), // 0 to 1000
                 quality: 'VALID',
                 timestamp: new Date().toISOString(),
                 comid: signal.comid

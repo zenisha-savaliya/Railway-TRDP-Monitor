@@ -2,8 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { BinaryProtocolService } from './binary-protocol.service';
-
 // Use current window origin to ensure API calls use the same host/port as the page
 const API_BASE = `${window.location.origin}/api`;
 
@@ -134,26 +132,13 @@ export class ApiService {
     );
   }
 
-  // Write data endpoint - Binary format
+  // Write data endpoint - JSON format (works with backends that expect JSON; avoids 400 Bad Request)
   writeData(signalId: number, value: any, datatype: string = 'FLOAT32'): Observable<any> {
-    // Encode to binary format
-    const binaryData = BinaryProtocolService.encodeSignalData(signalId, value, datatype);
-    
-    // Send as binary
-    return this.http.post(`${API_BASE}/writedata`, 
-      binaryData,
-      { 
-        headers: this.getHeaders()
-          .set('Content-Type', 'application/octet-stream')
-          .set('X-Signal-Id', signalId.toString())
-          .set('X-Data-Type', datatype),
-        responseType: 'arraybuffer'
-      }
-    ).pipe(
-      map((response: ArrayBuffer) => {
-        // Decode response if needed
-        return { success: true, response };
-      }),
+    const body = { signalId, value, datatype };
+    return this.http.post(`${API_BASE}/writedata`, body, {
+      headers: this.getHeaders().set('Content-Type', 'application/json')
+    }).pipe(
+      map(() => ({ success: true })),
       catchError(error => {
         console.error('Error writing data:', error);
         return throwError(() => error);
@@ -161,37 +146,20 @@ export class ApiService {
     );
   }
 
-  // Batch write data endpoint - Binary format
+  // Batch write data endpoint - JSON format
   writeDataBatch(subsystemId: number, signals: Array<{signalId: number, value: any, datatype: string}>): Observable<any> {
-    // Create signal data array
-    const signalData = signals.map(s => ({
-      signalId: s.signalId,
-      value: s.value,
-      datatype: s.datatype
-    }));
-    
-    // Create datatype map
-    const datatypes: { [signalId: number]: string } = {};
-    signals.forEach(s => {
-      datatypes[s.signalId] = s.datatype;
-    });
-    
-    // Encode to binary packet
-    const binaryPacket = BinaryProtocolService.encodePacket(subsystemId, signalData, datatypes);
-    
-    // Send as binary
-    return this.http.post(`${API_BASE}/writedata/batch`, 
-      binaryPacket,
-      { 
-        headers: this.getHeaders()
-          .set('Content-Type', 'application/octet-stream')
-          .set('X-Subsystem-Id', subsystemId.toString()),
-        responseType: 'arraybuffer'
-      }
-    ).pipe(
-      map((response: ArrayBuffer) => {
-        return { success: true, response };
-      }),
+    const body = {
+      subsystemId,
+      signals: signals.map(s => ({
+        signalId: s.signalId,
+        value: s.value,
+        datatype: s.datatype || 'FLOAT32'
+      }))
+    };
+    return this.http.post(`${API_BASE}/writedata/batch`, body, {
+      headers: this.getHeaders().set('Content-Type', 'application/json')
+    }).pipe(
+      map(() => ({ success: true })),
       catchError(error => {
         console.error('Error writing batch data:', error);
         return throwError(() => error);

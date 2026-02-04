@@ -213,19 +213,34 @@ app.get('/api/livedata', authenticateToken, (req, res) => {
     });
 });
 
-// Write data route (Angular format) - accepts binary (application/octet-stream)
-app.post('/api/writedata', rawParser, authenticateToken, (req, res) => {
-    console.log('[API] POST write data (Angular format)', req.body ? `body length: ${req.body.length}` : '');
-    // Return 200; client expects arraybuffer response
-    res.set('Content-Type', 'application/octet-stream');
-    res.status(200).send(Buffer.from([]));
+// Conditional body parser: use raw for octet-stream, else rely on express.json() for JSON
+function writedataBodyParser(req, res, next) {
+    if (req.headers['content-type'] && req.headers['content-type'].includes('application/octet-stream')) {
+        return rawParser(req, res, next);
+    }
+    next();
+}
+
+// Write data route - accepts both JSON and binary (application/octet-stream)
+app.post('/api/writedata', writedataBodyParser, authenticateToken, (req, res) => {
+    if (Buffer.isBuffer(req.body)) {
+        console.log('[API] POST write data (binary)', req.body.length, 'bytes');
+    } else {
+        console.log('[API] POST write data (JSON)', req.body && (req.body.signalId != null) ? `signalId=${req.body.signalId}` : '');
+    }
+    res.set('Content-Type', 'application/json');
+    res.status(200).json({ success: true });
 });
 
-// Batch write data route - accepts binary (application/octet-stream)
-app.post('/api/writedata/batch', rawParser, authenticateToken, (req, res) => {
-    console.log('[API] POST batch write data (Angular format)', req.body ? `body length: ${req.body.length}` : '');
-    res.set('Content-Type', 'application/octet-stream');
-    res.status(200).send(Buffer.from([]));
+// Batch write data route - accepts both JSON and binary
+app.post('/api/writedata/batch', writedataBodyParser, authenticateToken, (req, res) => {
+    if (Buffer.isBuffer(req.body)) {
+        console.log('[API] POST batch write data (binary)', req.body.length, 'bytes');
+    } else {
+        console.log('[API] POST batch write data (JSON)', req.body && req.body.signals ? `signals=${req.body.signals.length}` : '');
+    }
+    res.set('Content-Type', 'application/json');
+    res.status(200).json({ success: true });
 });
 
 // Files route

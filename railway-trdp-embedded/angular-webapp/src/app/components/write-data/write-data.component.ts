@@ -131,7 +131,17 @@ export class WriteDataComponent implements OnInit {
         alert('Data written successfully!');
       },
       error: (error) => {
-        alert('Failed to write data: ' + error.message);
+        const status = error?.status;
+        const msg = error?.error?.message || error?.error?.error || error?.message;
+        if (status === 400) {
+          alert('Invalid request: ' + (msg || 'Bad request. The server may expect a different format.'));
+        } else if (status === 401 || status === 403) {
+          alert('Session expired or access denied. Please log in again.');
+        } else if (!status || status === 0 || status >= 500) {
+          alert('Cannot reach server or server error. ' + (msg || ''));
+        } else {
+          alert('Failed to write data: ' + (msg || error?.message || 'Unknown error'));
+        }
       }
     });
   }
@@ -177,7 +187,15 @@ export class WriteDataComponent implements OnInit {
       error: (error) => {
         this.isSavingAll = false;
         this.cdr.markForCheck();
-        alert('Failed to write data: ' + (error.message || 'Unknown error'));
+        const status = error?.status;
+        const msg = error?.error?.message || error?.error?.error || error?.message;
+        if (status === 400) {
+          alert('Invalid request: ' + (msg || 'Bad request. The server may expect a different format.'));
+        } else if (status === 401 || status === 403) {
+          alert('Session expired or access denied. Please log in again.');
+        } else {
+          alert('Failed to write data: ' + (msg || error?.message || 'Unknown error'));
+        }
       }
     });
   }
@@ -246,7 +264,8 @@ export class WriteDataComponent implements OnInit {
           completed++;
           this.isSavingAll = false;
           this.cdr.markForCheck();
-          alert(`Failed to send to ${batch.name}: ` + (error.message || 'Unknown error'));
+          const msg = error?.error?.message || error?.error?.error || error?.message;
+          alert(`Failed to send to ${batch.name}: ` + (msg || error?.message || 'Unknown error'));
         }
       });
     });

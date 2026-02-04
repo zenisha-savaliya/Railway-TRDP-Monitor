@@ -226,10 +226,12 @@ export class ApiService {
     return this.http.post(`${API_BASE}/firmware`, formData, { headers });
   }
 
-  // Device configuration endpoints
-  getDeviceConfig(): Observable<any> {
+  // Device configuration endpoints (per-subsystem via query param)
+  getDeviceConfig(subsystemId?: number): Observable<any> {
+    const params = subsystemId != null ? { subsystemId: subsystemId.toString() } : undefined;
     return this.http.get(`${API_BASE}/v1/config/device`, {
-      headers: this.getHeaders().set('Accept', 'application/json')
+      headers: this.getHeaders().set('Accept', 'application/json'),
+      params
     }).pipe(
       map((response: any) => {
         // Backend returns { status: 'success', data: {...} }
@@ -242,9 +244,11 @@ export class ApiService {
     );
   }
 
-  updateDeviceConfig(config: any): Observable<any> {
+  updateDeviceConfig(config: any, subsystemId?: number): Observable<any> {
+    const params = subsystemId != null ? { subsystemId: subsystemId.toString() } : undefined;
     return this.http.put(`${API_BASE}/v1/config/device`, config, {
-      headers: this.getHeaders().set('Content-Type', 'application/json')
+      headers: this.getHeaders().set('Content-Type', 'application/json'),
+      params
     }).pipe(
       catchError(error => {
         console.error('Error updating device config:', error);

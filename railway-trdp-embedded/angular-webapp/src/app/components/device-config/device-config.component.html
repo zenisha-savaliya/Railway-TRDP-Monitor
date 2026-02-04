@@ -39,15 +39,16 @@
       <p>No subsystems configured. Please configure subsystems first before setting device configuration.</p>
     </div>
     
-    <div *ngIf="configuredSubsystemNames.length > 0" class="mb-6">
+    <div *ngIf="subsystems.length > 0" class="mb-6">
       <label class="block text-sm font-medium mb-3">Configured Subsystems:</label>
       <div class="subsystem-buttons">
         <button 
-          *ngFor="let sub of configuredSubsystemNames"
-          class="btn btn-secondary active"
-          style="cursor: default;"
+          *ngFor="let sub of subsystems"
+          class="btn btn-secondary"
+          [class.active]="selectedSubsystem?.id === sub.id"
+          (click)="onSubsystemChange(sub)"
         >
-          {{ sub }}
+          {{ sub.name }}
         </button>
       </div>
     </div>

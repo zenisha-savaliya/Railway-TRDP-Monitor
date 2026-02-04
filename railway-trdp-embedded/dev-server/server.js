@@ -35,12 +35,22 @@ let signals = [
     { id: 5, name: 'Battery_Voltage', subsystemId: 2, datatype: 'FLOAT32', comid: 1004, scaling: 0.01, cycletime: 1000, msgtype: 'PD', fragmentation: 'NO', access: 'READ' }
 ];
 
-let deviceConfig = {
-    ipMode: 'static',
-    ipAddress: '192.168.1.100',
-    subnetMask: '255.255.255.0',
-    gateway: '192.168.1.1',
-    dns: '8.8.8.8'
+// Per-subsystem device configuration (keyed by subsystem ID)
+let deviceConfigs = {
+    1: {
+        ipMode: 'static',
+        ipAddress: '192.168.1.100',
+        subnetMask: '255.255.255.0',
+        gateway: '192.168.1.1',
+        dns: '8.8.8.8'
+    },
+    2: {
+        ipMode: 'static',
+        ipAddress: '192.168.1.101',
+        subnetMask: '255.255.255.0',
+        gateway: '192.168.1.1',
+        dns: '8.8.4.4'
+    }
 };
 
 // Mock live data generator
@@ -427,20 +437,50 @@ app.post('/api/v1/data/write', authenticateToken, (req, res) => {
 // ==================== DEVICE CONFIGURATION ROUTES ====================
 
 app.get('/api/v1/config/device', authenticateToken, (req, res) => {
-    console.log('[CONFIG] GET device configuration');
+    const subsystemId = req.query.subsystemId ? parseInt(req.query.subsystemId) : null;
+    let config;
+
+    if (subsystemId && deviceConfigs[subsystemId]) {
+        config = deviceConfigs[subsystemId];
+        console.log(`[CONFIG] GET device configuration for subsystemId=${subsystemId}`);
+    } else {
+        // Fallback: return first available config
+        const firstKey = Object.keys(deviceConfigs)[0];
+        config = deviceConfigs[firstKey];
+        console.log('[CONFIG] GET device configuration (default)');
+    }
+
     res.json({
         status: 'success',
-        data: deviceConfig
+        data: config
     });
 });
 
 app.put('/api/v1/config/device', authenticateToken, (req, res) => {
-    deviceConfig = { ...deviceConfig, ...req.body };
+    const subsystemId = req.query.subsystemId ? parseInt(req.query.subsystemId) : null;
+
+    if (!subsystemId || !subsystems.find(s => s.id === subsystemId)) {
+        console.log('[CONFIG] PUT update device configuration (no valid subsystemId provided)');
+        return res.status(400).json({
+            status: 'error',
+            message: 'subsystemId query parameter is required and must reference an existing subsystem'
+        });
+    }
+
+    const existingConfig = deviceConfigs[subsystemId] || {
+        ipMode: 'static',
+        ipAddress: '',
+        subnetMask: '',
+        gateway: '',
+        dns: ''
+    };
+
+    deviceConfigs[subsystemId] = { ...existingConfig, ...req.body };
     
-    console.log('[CONFIG] PUT update device configuration');
+    console.log(`[CONFIG] PUT update device configuration for subsystemId=${subsystemId}`);
     res.json({
         status: 'success',
-        data: deviceConfig,
+        data: deviceConfigs[subsystemId],
         message: 'Device configuration updated'
     });
 });

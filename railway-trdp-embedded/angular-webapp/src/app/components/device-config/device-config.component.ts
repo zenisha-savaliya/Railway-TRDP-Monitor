@@ -1,13 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { ApiService, Subsystem } from '../../services/api.service';
 
+interface DeviceConfigState {
+  ipMode: string;
+  ipAddress: string;
+  subnetMask: string;
+  gateway: string;
+}
+
 @Component({
   selector: 'app-device-config',
   templateUrl: './device-config.component.html',
   styleUrls: ['./device-config.component.css']
 })
 export class DeviceConfigComponent implements OnInit {
-  deviceConfig = {
+  deviceConfig: DeviceConfigState = {
     ipMode: 'static',
     ipAddress: '',
     subnetMask: '',
@@ -16,6 +23,8 @@ export class DeviceConfigComponent implements OnInit {
   
   subsystems: Subsystem[] = [];
   configuredSubsystemNames: string[] = [];
+  selectedSubsystem: Subsystem | null = null;
+  subsystemConfigs: { [id: number]: DeviceConfigState } = {};
   isUploadingConfig: boolean = false;
   
   // Validation errors
@@ -30,7 +39,6 @@ export class DeviceConfigComponent implements OnInit {
   ngOnInit(): void {
     console.log('DeviceConfigComponent initialized');
     this.loadSubsystems();
-    this.loadDeviceConfig();
   }
 
   loadSubsystems(): void {
@@ -41,6 +49,11 @@ export class DeviceConfigComponent implements OnInit {
         // Only show configured subsystems
         this.configuredSubsystemNames = this.subsystems.map(s => s.name);
         console.log('Subsystems loaded successfully:', this.subsystems.length, this.subsystems);
+
+        if (this.subsystems.length > 0) {
+          this.selectedSubsystem = this.subsystems[0];
+          this.loadDeviceConfigForSelected();
+        }
       },
       error: (error) => {
         console.error('Error loading subsystems:', error);
@@ -59,11 +72,17 @@ export class DeviceConfigComponent implements OnInit {
     });
   }
 
-  loadDeviceConfig(): void {
-    console.log('Loading device configuration...');
-    this.apiService.getDeviceConfig().subscribe({
+  loadDeviceConfigForSelected(): void {
+    if (!this.selectedSubsystem) {
+      return;
+    }
+
+    const subsystemId = this.selectedSubsystem.id;
+    console.log('Loading device configuration for subsystem:', subsystemId, this.selectedSubsystem.name);
+
+    this.apiService.getDeviceConfig(subsystemId).subscribe({
       next: (config) => {
-        console.log('Device config loaded successfully:', config);
+        console.log('Device config loaded successfully for subsystem', subsystemId, config);
         if (config) {
           this.deviceConfig = {
             ipMode: config.ipMode || 'static',
@@ -71,6 +90,7 @@ export class DeviceConfigComponent implements OnInit {
             subnetMask: config.subnetMask || '',
             gateway: config.gateway || ''
           };
+          this.subsystemConfigs[subsystemId] = { ...this.deviceConfig };
         }
       },
       error: (error) => {
@@ -86,6 +106,16 @@ export class DeviceConfigComponent implements OnInit {
         }
       }
     });
+  }
+
+  onSubsystemChange(subsystem: Subsystem): void {
+    this.selectedSubsystem = subsystem;
+    const cached = this.subsystemConfigs[subsystem.id];
+    if (cached) {
+      this.deviceConfig = { ...cached };
+    } else {
+      this.loadDeviceConfigForSelected();
+    }
   }
 
   /**
@@ -209,7 +239,7 @@ export class DeviceConfigComponent implements OnInit {
 
   sendConfiguration(): void {
     // Validate that at least one subsystem is configured
-    if (this.configuredSubsystemNames.length === 0) {
+    if (!this.selectedSubsystem) {
       alert('Please configure at least one subsystem before sending device configuration.');
       return;
     }
@@ -227,13 +257,13 @@ export class DeviceConfigComponent implements OnInit {
       }
     }
 
-    console.log('Sending device configuration:', this.deviceConfig);
-    console.log('Configured subsystems:', this.configuredSubsystemNames);
+    console.log('Sending device configuration for subsystem:', this.selectedSubsystem.id, this.selectedSubsystem.name, this.deviceConfig);
     
     // Send to backend
-    this.apiService.updateDeviceConfig(this.deviceConfig).subscribe({
+    this.apiService.updateDeviceConfig(this.deviceConfig, this.selectedSubsystem.id).subscribe({
       next: (response) => {
         console.log('Device configuration saved successfully:', response);
+        this.subsystemConfigs[this.selectedSubsystem!.id] = { ...this.deviceConfig };
         alert('Device configuration sent successfully!\n\n' + JSON.stringify(this.deviceConfig, null, 2));
       },
       error: (error) => {
@@ -273,7 +303,8 @@ export class DeviceConfigComponent implements OnInit {
         console.log('Device config uploaded successfully:', response);
         this.isUploadingConfig = false;
         alert('Device configuration uploaded successfully.');
-        this.loadDeviceConfig();
+        // Reload subsystems and configs so UI reflects uploaded data
+        this.loadSubsystems();
         input.value = '';
       },
       error: (error) => {
